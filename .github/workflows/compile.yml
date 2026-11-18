@@ -38,36 +38,39 @@ jobs:
       - name: Compile and install RoboVM app bundle
         run: ./gradlew :ios:build :ios:robovmInstall --no-daemon --stacktrace --info
 
-      - name: Package app bundle as unsigned IPA
+      - name: Package RoboVM output as unsigned IPA
         shell: bash
         run: |
           set -euo pipefail
 
           BUILD_DIR="ios/build/robovm"
-          mkdir -p "$BUILD_DIR"
-
-          APP_PATH="$(find "$BUILD_DIR" -type d -name '*.app' -print -quit)"
-          if [[ -z "$APP_PATH" ]]; then
-            echo "RoboVM did not produce an .app bundle."
-            echo "Contents of $BUILD_DIR:"
-            find "$BUILD_DIR" -maxdepth 5 -print || true
-            exit 1
-          fi
-
-          echo "Found app bundle: $APP_PATH"
-          test -f "$APP_PATH/Info.plist"
-
-          PACKAGE_DIR="$RUNNER_TEMP/ipa-package"
-          rm -rf "$PACKAGE_DIR"
-          mkdir -p "$PACKAGE_DIR/Payload"
-          ditto "$APP_PATH" "$PACKAGE_DIR/Payload/$(basename "$APP_PATH")"
-
+          APP_NAME="Shattered Pixel Dungeon"
+          APP_BUNDLE="$RUNNER_TEMP/ipa-package/Payload/$APP_NAME.app"
           IPA_PATH="$BUILD_DIR/Shattered-Pixel-Dungeon-Endless.ipa"
-          rm -f "$IPA_PATH"
-          (cd "$PACKAGE_DIR" && /usr/bin/zip -qry "$IPA_PATH" Payload)
 
-          /usr/bin/unzip -l "$IPA_PATH"
+          # RoboVM's install task writes the .app bundle contents directly
+          # into ios/build/robovm rather than creating a directory ending in .app.
+          test -f "$BUILD_DIR/Info.plist"
+          test -x "$BUILD_DIR/IOSLauncher"
+          test -d "$BUILD_DIR/Frameworks"
+
+          rm -rf "$RUNNER_TEMP/ipa-package"
+          mkdir -p "$(dirname "$APP_BUNDLE")"
+          ditto "$BUILD_DIR" "$APP_BUNDLE"
+
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP_BUNDLE/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP_BUNDLE/Info.plist"
+          /usr/bin/plutil -lint "$APP_BUNDLE/Info.plist"
+          test -x "$APP_BUNDLE/IOSLauncher"
+          test -d "$APP_BUNDLE/Frameworks"
+
+          rm -f "$IPA_PATH"
+          (cd "$RUNNER_TEMP/ipa-package" && /usr/bin/zip -qry "$IPA_PATH" Payload)
+
+          /usr/bin/unzip -t "$IPA_PATH"
           test -s "$IPA_PATH"
+          echo "Created unsigned IPA: $IPA_PATH"
+          /bin/ls -lh "$IPA_PATH"
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4

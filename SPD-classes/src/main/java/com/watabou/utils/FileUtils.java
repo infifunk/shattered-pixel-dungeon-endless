@@ -81,7 +81,7 @@ public class FileUtils {
 		boolean foundTemp = false;
 		for (FileHandle file : dir.list()){
 			if (file.isDirectory()){
-				foundTemp = cleanTempFiles(dirName + file.name()) || foundTemp;
+				foundTemp = cleanTempFiles(dirName + file.name() + "/") || foundTemp;
 			} else if (file.length() == 0) {
 				file.delete();
 			} else {

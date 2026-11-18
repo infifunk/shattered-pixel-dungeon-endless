@@ -54,3 +54,12 @@ dependencies {
     implementation "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-ios"
     implementation "com.badlogicgames.gdx-controllers:gdx-controllers-ios:$gdxControllersVersion"
 }
+
+// CI builds do not have an Apple signing certificate or provisioning profile.
+// Disable signing for unsigned test IPAs and disable RoboVM's FIFO output pipes,
+// which can stall headless builds when no process is attached to consume them.
+robovm {
+    iosSkipSigning = true
+    stdoutFifo = ""
+    stderrFifo = ""
+}

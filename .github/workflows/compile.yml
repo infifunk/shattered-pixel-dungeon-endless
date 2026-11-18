@@ -18,6 +18,7 @@ jobs:
   build-ios:
     name: Build Shattered Pixel Dungeon Endless IPA
     runs-on: macos-15-intel
+    timeout-minutes: 30
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -34,13 +35,44 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
-      - name: Build iOS IPA
-        run: ./gradlew :ios:createIPA --no-daemon --stacktrace
+      - name: Compile and install RoboVM app bundle
+        run: ./gradlew :ios:build :ios:robovmInstall --no-daemon --stacktrace --info
+
+      - name: Package app bundle as unsigned IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BUILD_DIR="ios/build/robovm"
+          mkdir -p "$BUILD_DIR"
+
+          APP_PATH="$(find "$BUILD_DIR" -type d -name '*.app' -print -quit)"
+          if [[ -z "$APP_PATH" ]]; then
+            echo "RoboVM did not produce an .app bundle."
+            echo "Contents of $BUILD_DIR:"
+            find "$BUILD_DIR" -maxdepth 5 -print || true
+            exit 1
+          fi
+
+          echo "Found app bundle: $APP_PATH"
+          test -f "$APP_PATH/Info.plist"
+
+          PACKAGE_DIR="$RUNNER_TEMP/ipa-package"
+          rm -rf "$PACKAGE_DIR"
+          mkdir -p "$PACKAGE_DIR/Payload"
+          ditto "$APP_PATH" "$PACKAGE_DIR/Payload/$(basename "$APP_PATH")"
+
+          IPA_PATH="$BUILD_DIR/Shattered-Pixel-Dungeon-Endless.ipa"
+          rm -f "$IPA_PATH"
+          (cd "$PACKAGE_DIR" && /usr/bin/zip -qry "$IPA_PATH" Payload)
+
+          /usr/bin/unzip -l "$IPA_PATH"
+          test -s "$IPA_PATH"
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: Shattered-Pixel-Dungeon-Endless-iOS-IPA
-          path: ios/build/robovm/**/*.ipa
+          path: ios/build/robovm/Shattered-Pixel-Dungeon-Endless.ipa
           if-no-files-found: error
           retention-days: 14

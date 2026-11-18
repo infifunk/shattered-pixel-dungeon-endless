@@ -1,0 +1,38 @@
+name: iOS Compile Check
+
+on:
+  push:
+    branches:
+      - master
+      - endless-development
+  pull_request:
+    branches:
+      - master
+      - endless-development
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compile-ios:
+    name: Compile iOS Java Sources
+    runs-on: macos-14
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Compile iOS target
+        run: ./gradlew :ios:compileJava --no-daemon

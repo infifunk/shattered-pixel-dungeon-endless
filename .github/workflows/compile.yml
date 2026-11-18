@@ -1,4 +1,4 @@
-name: iOS Compile Check
+name: Build iOS IPA
 
 on:
   push:
@@ -15,9 +15,9 @@ permissions:
   contents: read
 
 jobs:
-  compile-ios:
-    name: Compile iOS Java Sources
-    runs-on: macos-15
+  build-ios:
+    name: Build Shattered Pixel Dungeon Endless IPA
+    runs-on: macos-15-intel
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -34,5 +34,13 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
-      - name: Compile iOS target
-        run: ./gradlew :ios:compileJava --no-daemon
+      - name: Build iOS IPA
+        run: ./gradlew :ios:createIPA --no-daemon
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Shattered-Pixel-Dungeon-Endless-iOS-IPA
+          path: ios/build/robovm/**/*.ipa
+          if-no-files-found: error
+          retention-days: 14

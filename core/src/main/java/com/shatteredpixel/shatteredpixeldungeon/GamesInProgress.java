@@ -38,7 +38,7 @@ public class GamesInProgress {
 	public static final int MAX_SLOTS = HeroClass.values().length;
 	
 	//null means we have loaded info and it is empty, no entry means unknown.
-	private static HashMap<Integer, Info> slotStates = new HashMap<>();
+	private static HashMap<String, Info> slotStates = new HashMap<>();
 	public static int curSlot;
 	
 	public static HeroClass selectedClass;
@@ -55,7 +55,7 @@ public class GamesInProgress {
 	}
 	
 	public static String gameFolder( int slot ){
-		return Messages.format(GAME_FOLDER, slot);
+		return GameMode.current.saveDirectory() + Messages.format(GAME_FOLDER, slot);
 	}
 	
 	public static String gameFile( int slot ){
@@ -97,13 +97,14 @@ public class GamesInProgress {
 	
 	public static Info check( int slot ) {
 		
-		if (slotStates.containsKey( slot )) {
+		String cacheKey = GameMode.current.name() + ":" + slot;
+		if (slotStates.containsKey( cacheKey )) {
 			
-			return slotStates.get( slot );
+			return slotStates.get( cacheKey );
 			
 		} else if (!gameExists( slot )) {
 			
-			slotStates.put(slot, null);
+			slotStates.put(cacheKey, null);
 			return null;
 			
 		} else {
@@ -129,7 +130,7 @@ public class GamesInProgress {
 				info = null;
 			}
 			
-			slotStates.put( slot, info );
+			slotStates.put( cacheKey, info );
 			return info;
 			
 		}
@@ -163,15 +164,15 @@ public class GamesInProgress {
 		info.goldCollected = Statistics.goldCollected;
 		info.maxDepth = Statistics.deepestFloor;
 
-		slotStates.put( slot, info );
+		slotStates.put( GameMode.current.name() + ":" + slot, info );
 	}
 	
 	public static void setUnknown( int slot ) {
-		slotStates.remove( slot );
+		slotStates.remove( GameMode.current.name() + ":" + slot );
 	}
 	
 	public static void delete( int slot ) {
-		slotStates.put( slot, null );
+		slotStates.put( GameMode.current.name() + ":" + slot, null );
 	}
 	
 	public static class Info {

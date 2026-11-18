@@ -25,6 +25,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Chrome;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.GameMode;
 import com.shatteredpixel.shatteredpixeldungeon.GamesInProgress;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
@@ -69,6 +70,7 @@ public class TitleScene extends PixelScene {
 	private Image signs;
 
 	private StyledButton btnPlay;
+	private StyledButton btnEndless;
 	private StyledButton btnSupport;
 	private StyledButton btnRankings;
 	private StyledButton btnJournal;
@@ -144,9 +146,10 @@ public class TitleScene extends PixelScene {
 
 		final Chrome.Type GREY_TR = Chrome.Type.GREY_BUTTON_TR;
 		
-		btnPlay = new StyledButton(GREY_TR, Messages.get(this, "enter")){
+		btnPlay = new StyledButton(GREY_TR, "Original"){
 			@Override
 			protected void onClick() {
+				GameMode.select(GameMode.ORIGINAL);
 				if (GamesInProgress.checkAll().size() == 0){
 					GamesInProgress.selectedClass = null;
 					GamesInProgress.curSlot = 1;
@@ -158,6 +161,7 @@ public class TitleScene extends PixelScene {
 			
 			@Override
 			protected boolean onLongClick() {
+				GameMode.select(GameMode.ORIGINAL);
 				//making it easier to start runs quickly while debugging
 				if (DeviceCompat.isDebug()) {
 					GamesInProgress.selectedClass = null;
@@ -170,6 +174,22 @@ public class TitleScene extends PixelScene {
 		};
 		btnPlay.icon(Icons.get(Icons.ENTER));
 		add(btnPlay);
+
+		btnEndless = new StyledButton(GREY_TR, "Endless"){
+			@Override
+			protected void onClick() {
+				GameMode.select(GameMode.ENDLESS);
+				if (GamesInProgress.checkAll().size() == 0){
+					GamesInProgress.selectedClass = null;
+					GamesInProgress.curSlot = 1;
+					ShatteredPixelDungeon.switchScene(HeroSelectScene.class);
+				} else {
+					ShatteredPixelDungeon.switchNoFade(StartScene.class);
+				}
+			}
+		};
+		btnEndless.icon(Icons.get(Icons.ENTER));
+		add(btnEndless);
 
 		btnSupport = new SupportButton(GREY_TR, Messages.get(this, "support"));
 		add(btnSupport);
@@ -221,9 +241,11 @@ public class TitleScene extends PixelScene {
 		float buttonAreaWidth = landscape() ? PixelScene.MIN_WIDTH_L-6 : PixelScene.MIN_WIDTH_P-2;
 		float btnAreaLeft = insets.left + (w - buttonAreaWidth) / 2f;
 		if (landscape()) {
-			btnPlay.setRect(btnAreaLeft, insets.top + topRegion+GAP, (buttonAreaWidth/2)-1, BTN_HEIGHT);
+			float primaryButtonWidth = (buttonAreaWidth - 4) / 3f;
+			btnPlay.setRect(btnAreaLeft, insets.top + topRegion+GAP, primaryButtonWidth, BTN_HEIGHT);
 			align(btnPlay);
-			btnSupport.setRect(btnPlay.right()+2, btnPlay.top(), btnPlay.width(), BTN_HEIGHT);
+			btnEndless.setRect(btnPlay.right()+2, btnPlay.top(), primaryButtonWidth, BTN_HEIGHT);
+			btnSupport.setRect(btnEndless.right()+2, btnPlay.top(), primaryButtonWidth, BTN_HEIGHT);
 			btnRankings.setRect(btnPlay.left(), btnPlay.bottom()+ GAP, (float) (Math.floor(buttonAreaWidth/3f)-1), BTN_HEIGHT);
 			btnJournal.setRect(btnRankings.right()+2, btnRankings.top(), btnRankings.width(), BTN_HEIGHT);
 			btnNews.setRect(btnJournal.right()+2, btnJournal.top(), btnRankings.width(), BTN_HEIGHT);
@@ -231,9 +253,10 @@ public class TitleScene extends PixelScene {
 			btnChanges.setRect(btnSettings.right()+2, btnSettings.top(), btnRankings.width(), BTN_HEIGHT);
 			btnAbout.setRect(btnChanges.right()+2, btnSettings.top(), btnRankings.width(), BTN_HEIGHT);
 		} else {
-			btnPlay.setRect(btnAreaLeft, insets.top + topRegion+GAP, buttonAreaWidth, BTN_HEIGHT);
+			btnPlay.setRect(btnAreaLeft, insets.top + topRegion+GAP, (buttonAreaWidth/2)-1, BTN_HEIGHT);
 			align(btnPlay);
-			btnSupport.setRect(btnPlay.left(), btnPlay.bottom()+ GAP, btnPlay.width(), BTN_HEIGHT);
+			btnEndless.setRect(btnPlay.right()+2, btnPlay.top(), btnPlay.width(), BTN_HEIGHT);
+			btnSupport.setRect(btnPlay.left(), btnPlay.bottom()+ GAP, buttonAreaWidth, BTN_HEIGHT);
 			btnRankings.setRect(btnPlay.left(), btnSupport.bottom()+ GAP, (btnPlay.width()/2)-1, BTN_HEIGHT);
 			btnJournal.setRect(btnRankings.right()+2, btnRankings.top(), btnRankings.width(), BTN_HEIGHT);
 			btnNews.setRect(btnRankings.left(), btnRankings.bottom()+ GAP, btnRankings.width(), BTN_HEIGHT);
@@ -315,6 +338,7 @@ public class TitleScene extends PixelScene {
 		//signs.am = alpha; handles this itself
 
 		btnPlay.enable(alpha != 0);
+		btnEndless.enable(alpha != 0);
 		btnSupport.enable(alpha != 0);
 		btnRankings.enable(alpha != 0);
 		btnJournal.enable(alpha != 0);
@@ -324,6 +348,7 @@ public class TitleScene extends PixelScene {
 		btnAbout.enable(alpha != 0);
 
 		btnPlay.alpha(alpha);
+		btnEndless.alpha(alpha);
 		btnSupport.alpha(alpha);
 		btnRankings.alpha(alpha);
 		btnJournal.alpha(alpha);
